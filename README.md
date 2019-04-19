@@ -14,7 +14,7 @@ This is intended as a guide to get CReduce up and running on Windows.
 
 [Using CReduce](#using)
 * [Bring Your Own Interestingness Test](#interestingness-byo)  
-* [Simple Interestingness Test](#interestingness)  
+* [Interestingness Test Made Easy](#interestingness)  
 
 <a name="intro"/>
 
@@ -185,6 +185,15 @@ unifdef needs to be manually copied into the place where creduce expects it to b
 ## Using CReduce
 
 It's finally time to use CReduce!  Let's look at how to actually use it.
+
+Normally, creduce expects you to write your own interestingness test.  This is a self-contained script which has all information about the compilation hardcoded directly into the script.  Then creduce will invoke your script once for each source file it wants to check the interestingness of.  There are several reasons this can often be a bit of a burden.  Some of the reasons are specific to Windows, but some are more general and apply to every platform.
+
+In a large majority of cases, an interestingness test boils down to "run the compiler with these flags, and the invocation was interesting if X was in the output, otherwise it's not interesting".  It's painstaking to have to write a new script every single time that copies a lot of the boilerplate, hardcodes paths, etc.  It would be nice if we could automate this.
+
+Further adding to the problem (and this is the Windows specific part) is that the "script" that creduce expects is something that can be run the same way an executable can be run.  On Unixy this is fine, because you can write a shell script, but on Windows this means you need to use a batch file, and I can assure you that nobody wants to do anything non-trivial in a batch file.  It's nice to be able to write our scripts in something like Python.  So on Windows, we additionally need a "wrapper" batch file that just calls a Python script, but then this script has to be hardcoded as well, so now we need 2 scripts filled with boilerplate every time we want a new interestingness test.
+
+First we'll look at how to write an interestingness test the "standard" way, which will motivate the next topic, which provides an easy way to write interestingness tests for the most common use cases.
+
 
 <a name="interestingness-byo"/>
 
