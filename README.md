@@ -234,7 +234,9 @@ First we'll look at how to write an interestingness test the "standard" way, whi
 
 You invoke creduce with `$ perl path/to/creduce test.bat foo.cpp`.
 
-Because of reasons, `foo.cpp` here must actually be an absolute path.  `test.bat` is then free to invoke a python script (which must also be an absolute path), and that python script must also be hardcoded to build the same absolute path that was specified in the initial `creduce` invocation.  If that sounds like a lot of absolute paths, it is!  
+During the reduction process, creduce will make many temporary directories, copy the current version of the source into it, and
+run your script against it.  For this reason, it's important that `foo.cpp` be relative and assumed to be located in the current
+directory.  This way, whenever creduce runs your interestingness test, it will pick up the version of the source file in the current temporary directory.
 
 Let's make this concrete by looking at an example of a toy program with something we want to reduce, and the scripts and creduce invocation needed to make this happen.
 
@@ -253,8 +255,8 @@ import os
 import subprocess
 import sys
 
-# IMPORTANT: Path to source file is absolute
-args = ['cl.exe', '/W3', '/WX', 'C:/warning/foo.cpp']
+# IMPORTANT: Path to source file is in current working directory
+args = ['cl.exe', '/W3', '/WX', 'foo.cpp']
 
 obj = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 (stdout, stderr) = obj.communicate()
@@ -268,15 +270,13 @@ sys.exit(1)
 Then we need to write our batch file wrapper which calls python with this script:
 ```
 REM C:\reduce\test.bat
-REM IMPORTANT: path to python script is absolute.
 python C:\reduce\test.py
 ```
 
 And finally, we can invoke creduce:
 
 ```
-$ ECHO Important: path to batch file and source file below are absolute.
-$ perl C:\src\creduce-build\creduce\creduce C:\reduce\test.bat C:\warning\foo.cpp
+$ perl C:\src\creduce-build\creduce\creduce test.bat foo.cpp
 ```
 
 If we run this, we should see creduce printing a bunch of output like this:
