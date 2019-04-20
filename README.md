@@ -16,6 +16,8 @@ This is intended as a guide to get CReduce up and running on Windows.
 * [Bring Your Own Interestingness Test](#interestingness-byo)  
 * [Interestingness Test Made Easy](#interestingness)  
 
+[A Non-Toy Example](#nontoy)
+
 <a name="intro"/>
 
 ## Introduction
@@ -294,3 +296,11 @@ $ python reduce.py --source=foo.cpp --creduce=C:\src\creduce-build\creduce\credu
 And we get the exact same result!  We didn't have to create any batch files, or python files, and we didn't have to worry about relative / absolute paths.  
 
 Note that BYO interestingness tests are obviously more powerful.  They allow you to compile multiple files, have interesting tests based on the generated code or object file, link stuff together, and pretty much whatever you want.  But for the majority of cases, the simple interestingness test should suffice and greatly simplify things.
+
+<a href="nontoy"/>
+
+## A Non-Toy Example
+
+Here we give an example of how CReduce can be used to find real problems by showing a non-trivial program that illustrates a compiler bug, and then using creduce to figure out exactly what that compiler bug is.
+
+TODO: Fill this out.
