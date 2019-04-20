@@ -333,3 +333,135 @@ Note that BYO interestingness tests are obviously more powerful.  They allow you
 ## A Non-Toy Example
 
 Here we give an example of how CReduce can be used to find real problems by showing a non-trivial program that illustrates a compiler bug, and then using creduce to figure out how to make that compiler bug smaller.
+
+To start with, I needed to find an ICE.  I searched the Microsoft Developer Community website and decided to use [this one](https://developercommunity.visualstudio.com/content/problem/538662/internal-compiler-error-27.html) which has something do with a `std::vector`.  The repro is here:
+
+```c
+// ice.cpp
+#include <vector>
+#include <cstdint>
+
+int what();
+
+enum class bingus_t : uint8_t {
+  bungus,
+  bingus,
+  lumpus
+};
+
+int what() {
+
+  struct a_struct_t {
+	  bool is_small {true};
+	  uint32_t delta_time {0};
+	  bingus_t type {bingus_t::bungus};
+	  uint32_t size {0};
+	  uint32_t data_size {0};
+  };
+  struct another_struct_t {
+	  std::vector<unsigned char> bytes {};
+	  a_struct_t ans {};
+  };
+
+  std::vector<another_struct_t> tests {
+	  {{0x00,0xFF,0x58,0x04,0x04,0x02,0x18,0x08},
+      {true,0x00,bingus_t::lumpus,8,7}},
+  };
+
+  return 0;
+}
+```
+
+But it's not immediately obvious what the problem is.  Let's see how creduce can help.
+
+First, preprocess the file so that creduce has a single self-contained source file to work with:
+
+```
+$ cl /c /P /EP /Fiice.pp.cpp ice.cpp
+```
+
+Next, let's make sure the ICE actually happens on the pre-processed file.
+
+```
+$ cl /c ice.pp.cpp
+C:\creduction>cl /Z7 /c ice.pp.cpp
+Microsoft (R) C/C++ Optimizing Compiler Version 19.20.27508.1 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+ice.pp.cpp
+C:\creduction\ice.pp.cpp(26) : fatal error C1001: An internal error has occurred in the compiler.
+(compiler file 'd:\agent\_work\1\s\src\vctools\Compiler\Utc\src\p2\main.c', line 160)
+ To work around this problem, try simplifying or changing the program near the locations listed above.
+Please choose the Technical Support command on the Visual C++
+ Help menu, or open the Technical Support help file for more information
+  cl!InvokeCompilerPassW()+0x84fd5
+
+C:\creduction\ice.pp.cpp(26) : fatal error C1001: An internal error has occurred in the compiler.
+(compiler file 'd:\agent\_work\1\s\src\vctools\Compiler\Utc\src\Common\error.c', line 835)
+ To work around this problem, try simplifying or changing the program near the locations listed above.
+Please choose the Technical Support command on the Visual C++
+ Help menu, or open the Technical Support help file for more information
+```
+
+Now, let's try to reduce this to the smallest possible ICE.
+
+```
+$  python reduce.py --source=ice.pp.cpp --cores=12 --creduce=C:\src\creduce-build\creduce\creduce --stdout="compiler file 'd:\agent\_work\1\s\src\vctools\Compiler\Utc\src\p2\main.c', line 160" --stderr="compiler file 'd:\agent\_work\1\s\src\vctools\Compiler\Utc\src\p2\main.c', line 160" --cflags="/c"
+```
+
+Note that the text we're checking for includes the exact faulting line in the compiler, to make sure that the source file is only interesting if it produces the *same* ICE.
+
+After all is said and done, we get this:
+
+```c
+namespace std {
+template <class a> class initializer_list {
+public:
+  initializer_list();
+  initializer_list(a *, a *);
+};
+class b {
+  int c;
+
+public:
+  template <class j> b(j);
+};
+template <class d> class e {
+public:
+  e(initializer_list<d>) : f(int()) {}
+  ~e();
+  b f;
+};
+struct g {};
+struct h {
+  e<char> bytes;
+  g ans{};
+};
+e<h> i{{}};
+} // namespace std
+```
+
+While creduce is pretty good, if you play around with this by hand, you can get it a little smaller:
+
+```c
+namespace std {
+template <class a> struct initializer_list {
+  initializer_list();
+  initializer_list(a *, a *);
+};
+}
+
+template <class d> struct e {
+  e(std::initializer_list<d>);
+  ~e();
+  int f;
+};
+struct g {};
+struct h {
+  e<char> bytes;
+  g ans{};
+};
+e<h> i{{}};
+```
+
+But at least now it's more apparent what the bug is, and also makes for a better repro case.
