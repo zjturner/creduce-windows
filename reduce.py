@@ -48,6 +48,7 @@ parser.add_argument('--stdout', help='Mark test run as interesting if stdout con
 parser.add_argument('--stderr', help='Mark test run as interesting if stderr contains this text')
 parser.add_argument('--compiler', help='Path to compiler.  If not specified, cl.exe will be located in PATH')
 parser.add_argument('--cflags', help='flags to pass to compiler.')
+parser.add_argument('--cores', help='Number of cores to use.  (By default all available cores will be used)')
 parser.add_argument('--creduce', help='Path to creduce perl script.  If not specified, PATH will be searched')
 parser.add_argument('--now', action='store_true', help='Run this as an interestingness test instead of a wrapper')
 
@@ -112,9 +113,6 @@ if not os.path.exists(args.source):
     print('Source file "%s" does not exist.' % args.source)
     sys.exit(1)
 
-if not os.path.isabs(args.source):
-    args.source = os.path.realpath(args.source)
-
 if args.now:
     exit_code = _run_interestingness_test()
     sys.exit(exit_code)
@@ -126,8 +124,12 @@ if not args.creduce:
     print('Cannot find creduce.  Either pass --creduce or make sure it is in PATH')
     sys.exit(1)
 
+if not args.cores:
+    import multiprocessing
+    args.cores = multiprocessing.cpu_count()
+
 test_wrapper = _generate_test_wrapper()
 
-creduce_args = ['perl', args.creduce, test_wrapper, args.source]
+creduce_args = ['perl', args.creduce, '--n', args.cores, test_wrapper, args.source]
 
 result = subprocess.call(creduce_args, universal_newlines=True)
