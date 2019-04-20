@@ -316,7 +316,7 @@ $ copy foo.cpp.orig foo.cpp
 ```
 
 Then download [reduce.py](https://github.com/zjturner/creduce-windows/blob/master/reduce.py)
-and re-run creduce, this time run `reduce.py` instead of running creduce directly.
+and this time run `reduce.py` instead of running creduce directly.
 
 ```
 $ python reduce.py --source=foo.cpp --creduce=C:\src\creduce-build\creduce\creduce --stdout="warning treated as error" --cflags="/c /O2 /W3 /WX"
