@@ -154,6 +154,9 @@ gcc instead of MSVC.  You don't want this.  If this happens, delete `gcc.exe` an
 that needs them, it will always just re-download them same as it did in the
 earlier step.
 
+**Important**: As of this writing, LLVM miscompiles with VS 2019.  Please make
+sure you are using 2015 or 2017.
+
 1. Clone LLVM: `(src) $ git clone https://github.com/llvm/llvm-project.git`.
 2. Make a build directory: `(src) $ mkdir llvm-build && cd llvm-build`
 3. Configure the build.
