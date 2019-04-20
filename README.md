@@ -188,6 +188,7 @@ Finally!  We're ready to actually build CReduce.
       -DCMAKE_C_COMPILER=src/llvm-build/bin/clang-cl.exe
       -DCMAKE_CXX_COMPILER=src/llvm-build/bin/clang-cl.exe
       -DCMAKE_PREFIX_PATH=src/llvm-build
+      ..\creduce
 ```
 
 **Important**: CMake requires absolute paths.  Replace `src` with the absolute path
