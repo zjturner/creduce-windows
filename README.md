@@ -145,9 +145,18 @@ binary distribution package.  However, i was not able to make this work due to
 the fact that the binary distribution does not ship with the .cmake configuration
 files, and CReduce seems to require them.  So we will be building from source.
 
+**Important**: Make sure you are in a MSVC C++ Developer Command Prompt for
+these steps.  You can open one by searching for "x86 Native Tools Command
+Prompt for VS 2017" or similar.  Note that when you try to run cmake, it might
+find gcc on your path due to an earlier step, and then try to build clang using
+gcc instead of MSVC.  You don't want this.  If this happens, delete `gcc.exe` and
+`g++.exe` from `C:\Perl64\site\bin`.  If you ever try to install another package
+that needs them, it will always just re-download them same as it did in the
+earlier step.
+
 1. Clone LLVM: `(src) $ git clone https://github.com/llvm/llvm-project.git`.
 2. Make a build directory: `(src) $ mkdir llvm-build && cd llvm-build`
-3. Configure the build:
+3. Configure the build.
 ```
   (src/llvm-build) $ 
     cmake -G Ninja
