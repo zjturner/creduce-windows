@@ -195,7 +195,9 @@ Finally!  We're ready to actually build CReduce.
 of the directory.  Also, CMake requires forward slashes.  Do not use backslashes
 anywhere.
 
-2. Build and install creduce.  `(src/creduce-build) $ ninja && ninja install`
+2. Build creduce.  `(src/creduce-build) $ ninja`
+
+3. Install creduce (Note: You must be in an administrator command prompt): `(src/creduce-build) $ ninja install`
 
 **Note:** You will get thousands of warnings, but you should not get any errors.
 Ignore the warnings.
