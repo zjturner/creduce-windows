@@ -166,6 +166,10 @@ Finally!  We're ready to actually build CReduce.
       -DCMAKE_PREFIX_PATH=src/llvm-build
 ```
 
+**Important**: CMake requires absolute paths.  Replace `src` with the absolute path
+of the directory.  Also, CMake requires forward slashes.  Do not use backslashes
+anywhere.
+
 2. Build and install creduce.  `(src/creduce-build) $ ninja && ninja install`
 
 **Note:** You will get thousands of warnings, but you should not get any errors.
