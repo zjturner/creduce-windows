@@ -46,10 +46,22 @@ instructions assume that are you are in `src`.
 
 ```(src) $ git clone https://github.com/csmith-project/creduce.git```
 
-**Important**: Make sure you are set up to track the `llvm-svn-compatible` branch
-or else you may fail building CReduce using a newer version of Clang.
+2. Make sure you are set up to track the `llvm-svn-compatible` branch or else you
+may fail building CReduce using a newer version of Clang.
 
-2. Make a build directory (we'll use this later): `(src) $ mkdir creduce-build`
+```
+(src) $ cd creduce
+(src/creduce) $ git checkout -b creduce origin/llvm-svn-compatible
+Switched to a new branch 'creduce'
+Branch 'creduce' set up to track remote branch 'llvm-svn-compatible' from 'origin'.
+```
+
+3. Make a build directory (we'll use this later):
+
+```
+(src/creduce) $ cd ..
+(src) $ mkdir creduce-build
+```
 
 
 <a name="get-perl"/>
