@@ -232,7 +232,7 @@ First we'll look at how to write an interestingness test the "standard" way, whi
 
 You invoke creduce with `$ perl path/to/creduce test.bat foo.cpp`.
 
-Here, `path/to/creduce` must be the path where CReduce *is installed* (e.g. when you ran `ninja install`), and not the build output directory.  Additionally, `foo.cpp` must be an absolute path.  `test.bat` is then free to invoke a python script (which must also be an absolute path), and that python script must also be hardcoded to build the same absolute path that was specified in the initial `creduce` invocation.  If that sounds like a lot of absolute paths, it is!  
+Because of reasons, `foo.cpp` here must actually be an absolute path.  `test.bat` is then free to invoke a python script (which must also be an absolute path), and that python script must also be hardcoded to build the same absolute path that was specified in the initial `creduce` invocation.  If that sounds like a lot of absolute paths, it is!  
 
 Let's make this concrete by looking at an example of a toy program with something we want to reduce, and the scripts and creduce invocation needed to make this happen.
 
