@@ -186,11 +186,11 @@ unifdef needs to be manually copied into the place where creduce expects it to b
 
 It's finally time to use CReduce!  Let's look at how to actually use it.
 
-Normally, creduce expects you to write your own interestingness test.  This is a self-contained script which has all information about the compilation hardcoded directly into the script.  Then creduce will invoke your script once for each source file it wants to check the interestingness of.  There are several reasons this can often be a bit of a burden.  Some of the reasons are specific to Windows, but some are more general and apply to every platform.
+Normally, creduce expects you to write your own interestingness test.  This is a self-contained script which has all information about how to invoke the compiler as well as what makes the result interesting directly into the script.  Then creduce will invoke your script once for each source file it wants to check the interestingness of.  There are two big reasons this can often be a bit of a burden.  
 
-In a large majority of cases, an interestingness test boils down to "run the compiler with these flags, and the invocation was interesting if X was in the output, otherwise it's not interesting".  It's painstaking to have to write a new script every single time that copies a lot of the boilerplate, hardcodes paths, etc.  It would be nice if we could automate this.
+The first reason (which is not Windows specific) is that in a large majority of cases, an interestingness test boils down to "run the compiler with these flags, and the invocation was interesting if X was in the output, otherwise it's not interesting".  It's painstaking to have to write a new script every single time that copies a lot of the boilerplate, hardcodes paths, etc.  It would be nice if we could automate this.
 
-Further adding to the problem (and this is the Windows specific part) is that the "script" that creduce expects is something that can be run the same way an executable can be run.  On Unixy this is fine, because you can write a shell script, but on Windows this means you need to use a batch file, and I can assure you that nobody wants to do anything non-trivial in a batch file.  It's nice to be able to write our scripts in something like Python.  So on Windows, we additionally need a "wrapper" batch file that just calls a Python script, but then this script has to be hardcoded as well, so now we need 2 scripts filled with boilerplate every time we want a new interestingness test.
+This is compounded by the second reason (which is Windows specific).  The "script" that creduce expects is something that can be run the same way an executable can be run.  On Unixy systems this is fine, because you can write a shell script.  On Windows though this means you need to use a batch file, and I can assure you that nobody wants to do anything non-trivial in a batch file.  It's nice to be able to write our scripts in something like Python.  So on Windows, we additionally need a "wrapper" batch file that just calls a Python script, but then this script has to be hardcoded as well, so now we need 2 scripts filled with boilerplate every time we want a new interestingness test.
 
 First we'll look at how to write an interestingness test the "standard" way, which will motivate the next topic, which provides an easy way to write interestingness tests for the most common use cases.
 
@@ -199,6 +199,98 @@ First we'll look at how to write an interestingness test the "standard" way, whi
 
 ### Bring Your Own Interestingness Test
 
+You invoke creduce with `$ perl path/to/creduce test.bat foo.cpp`.
+
+Here, `path/to/creduce` must be the path where CReduce *is installed* (e.g. when you ran `ninja install`), and not the build output directory.  Additionally, `foo.cpp` must be an absolute path.  `test.bat` is then free to invoke a python script (which must also be an absolute path), and that python script must also be hardcoded to build the same absolute path that was specified in the initial `creduce` invocation.  If that sounds like a lot of absolute paths, it is!  
+
+Let's make this concrete by looking at an example of a toy program with something we want to reduce, and the scripts and creduce invocation needed to make this happen.
+
+```c
+C:\warning\foo.cpp
+int main(int argc, char **argv) {
+  return 1.0;  // This should warn about double to int conversion.
+}
+```
+
+First, we write `test.py` which will invoke the compiler, check for this warning, and return 0 if the warning is present, and 1 if the warning is not present.
+
+```python
+# C:\reduce\test.py
+import os
+import subprocess
+import sys
+
+# IMPORTANT: Path to source file is absolute
+args = ['cl.exe', '/W3', '/WX', 'C:/warning/foo.cpp']
+
+obj = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+(stdout, stderr) = obj.communicate()
+
+if "warning treated as error" in stdout:
+    sys.exit(0)
+
+sys.exit(1)
+```
+
+Then we need to write our batch file wrapper which calls python with this script:
+```
+REM C:\reduce\test.bat
+REM IMPORTANT: path to python script is absolute.
+python C:\reduce\test.py
+```
+
+And finally, we can invoke creduce:
+
+```
+$ ECHO Important: path to batch file and source file below are absolute.
+$ perl C:\src\creduce-build\creduce\creduce C:\reduce\test.bat C:\warning\foo.cpp
+```
+
+If we run this, we should see creduce printing a bunch of output like this:
+```
+===< pass_comments :: 0 >===
+===< pass_includes :: 0 >===
+===< pass_line_markers :: 0 >===
+===< pass_blank :: 0 >===
+(2.6 %, 373 bytes)
+===< pass_clang_binsrch :: replace-function-def-with-decl >===
+===< pass_clang_binsrch :: remove-unused-function >===
+===< pass_lines :: 0 >===
+(5.2 %, 363 bytes)
+===< pass_lines :: 1 >===
+```
+
+and if we wait long enough, it will return.  So what did it do?  Let's look at the
+original file now.
+
+```
+$ cat foo.cpp
+int main(int argc, char **argv) ;
+```
+
+And we can see that our program is smaller.
+
 <a name="interestingness"/>
 
 ### Simple Interestingness Test
+
+That was a lot of work though.  We had to write 2 files, hardcode a bunch of paths,
+and mess around with python subprocess module which you probably have to check the
+documentation for every time you use it.  Let's see how we can make this easier.
+
+Let's try this again.  First put the original (pre-reduced file) back where it was.
+
+```
+$ copy foo.cpp.orig foo.cpp
+```
+
+Then download [reduce.py](https://github.com/zjturner/creduce-windows/blob/master/reduce.py)
+and re-run creduce, this time run `reduce.py` instead of running creduce directly.
+
+```
+$ python reduce.py --source=foo.cpp --creduce=C:\src\creduce-build\creduce\creduce --stdout="warning treated as error" --cflags="/c /O2 /W3 /WX"
+```
+
+And we get the exact same result!  We didn't have to create any batch files, or python files, and we didn't have to worry about relative / absolute paths.  
+
+Note that BYO interestingness tests are obviously more powerful.  They allow you to compile multiple files, have interesting tests based on the generated code or object file, link stuff together, and pretty much whatever you want.  But for the majority of cases, the simple interestingness test should suffice and greatly simplify things.
