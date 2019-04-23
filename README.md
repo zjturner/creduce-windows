@@ -2,15 +2,13 @@ This is intended as a guide to get CReduce up and running on Windows.
 
 ##### Table of Contents  
 [Introduction](#intro)  
-[Setting up the Build Environment](#setup)
-* [Get CReduce](#get-creduce)  
-* [Get a Perl Distribution](#get-perl)  
-* [Get Other Required Tools](#get-other-tools)  
-* [Build unifdef.exe](#unifdef)  
-* [Build Clang](#build-clang)
-
+[A Word on PATH and Shells](#path)
+[Preliminaries](#prelim)
+[Get a Perl Distribution](#get-perl)  
+[Build Clang](#build-clang)
+[Build unifdef.exe](#unifdef)  
+[Get CReduce](#get-creduce)  
 [Build CReduce](#build)  
-[Copy unifdef.exe](#copy-unifdef)
 
 [Using CReduce](#using)
 * [Bring Your Own Interestingness Test](#interestingness-byo)  
@@ -30,38 +28,37 @@ from the path, things will go wrong.  This guide is intended to be a complete
 verifiably reproducible sequence of steps that will allow you to get CReduce
 working on your Windows machine.
 
-<a name="setup"/>
+<a name="path"/>
 
-## Setting up the Build Environment
+## A Word on PATH and Shells
+
+We assume that all commands (unless explicitly stated otherwise) are run from a cmd shell.  **NOT** a git bash shell or any other kind of shell.  Please do not use git bash unless the instructions explicitly call for it.
+
+For each tool that we build or all, instructions will be given about whether it needs to be in your PATH.  If the instructions indicate that it should be in PATH and you do not put it in PATH, you will be on your own to adjust the instructions as necessary.
+
+<a name="prelim"/>
+
+## Install Required Tools
+
+Before starting, you should have the following software installed:
+
+* [Flex](http://gnuwin32.sourceforge.net/packages/flex.htm)  
+* [Ninja](https://ninja-build.org/)
+* [CMake](https://cmake.org/download/)
+* [Git](https://gitforwindows.org/)
+
+Flex is a fast lexer generator used by CReduce.  Ninja is a build tool used (among
+other things) to build CMake-configured projects.  CMake and Git are, well... CMake
+and Git.  Download them all from the links above.
+
+All of these packages provide binary distributions.  You do not need to build anything from
+source.  In all cases it should be safe to download whatever the latest version is.
+
+**Important:** All of these tools should be in your `PATH` environment variable.
 
 For the remainder of the document, we will assume that your source tree is
 rooted at a folder named `src`.  All shell commands with no explicit
 instructions assume that are you are in `src`.
-
-<a name="get-creduce"/>
-
-### Get CReduce
-
-1. Clone creduce from its [github repo](https://github.com/csmith-project/creduce).
-
-```(src) $ git clone https://github.com/csmith-project/creduce.git```
-
-2. Make sure you are set up to track the `llvm-svn-compatible` branch or else you
-may fail building CReduce using a newer version of Clang.
-
-```
-(src) $ cd creduce
-(src/creduce) $ git checkout -b creduce origin/llvm-svn-compatible
-Switched to a new branch 'creduce'
-Branch 'creduce' set up to track remote branch 'llvm-svn-compatible' from 'origin'.
-```
-
-3. Make a build directory (we'll use this later):
-
-```
-(src/creduce) $ cd ..
-(src) $ mkdir creduce-build
-```
 
 
 <a name="get-perl"/>
@@ -71,9 +68,7 @@ Branch 'creduce' set up to track remote branch 'llvm-svn-compatible' from 'origi
 Download any Perl distribution you feel comfortable with.  [ActiveState](https://www.activestate.com/products/activeperl/downloads/)
 and [Strawberry Perl](http://strawberryperl.com/) are popular choices.
 
-**Important:** The rest of the document assumes Perl is in your `PATH` environment
-variable.  If you decide not to do this, it is up to you to recognize where and how
-to modify the remaining steps in the document.
+**Important:** perl should be in your `PATH` environment variable.
 
 Install the following Perl modules:
 
@@ -94,47 +89,6 @@ $ cpan -i "Regexp::Common"
 $ cpan -i "Term::ReadKey"
 ```
 
-<a name="get-other-tools"/>
-
-### Get Other Required Tools
-
-Flex is a fast lexer generator used by CReduce.  Ninja is a build tool used (among
-other things) to build CMake-configured projects.  CMake and Git are, well... CMake
-and Git.  Download them all from their respective homepages:
-
-* [Flex](http://gnuwin32.sourceforge.net/packages/flex.htm)  
-* [Ninja](https://ninja-build.org/)
-* [CMake](https://cmake.org/download/)
-* [Git](https://gitforwindows.org/)
-
-All of these packages provide binary distributions.  You do not need to build anything from
-source.  In all cases it should be safe to download whatever the latest version is.
-
-**Important:** The rest of the document assumes that all of these tools are in your `PATH`
-environment variable.  If you decide not to do this, it is up to you to recognize where and
-how to modify the remaining steps in the document.
-
-
-<a name="unifdef"/>
-
-### Build unifdef.exe
-
-unifdef is an optional utility that can be used by CReduce to eliminate blocks of preprocessor
-logic.  If you have it, CReduce can use it.  If not, it will work anyway (but probably be
-slowe and the reduction might not be as good).   Note that if you only ever reduce
-pre-processed source (e.g. `cl.exe /EP foo.cpp`) then you don't need this.  Nevertheless,
-we don't want to stray from the path, because that's where things start going wrong.
-
-1. Clone the repo: `(src) $ git clone git://dotat.at/unifdef.git`
-2. Open a git bash shell (Git Bash is a tool that ships with [Git for Windows](https://gitforwindows.org/))
-   and cd to the directory where you cloned unifdef in step 1.
-3. Run this command: `(src/unifdef) $ sh scripts/reversion.sh`.  You should see some output like this:
-```
-   version
-     -> unifdef-2.11.25.65842ab.XX 2019-04-19 12:27:33 -0700
-```
-4. Open `src/unifdef/win32/unifdef.sln` in a recent version of Visual Studio.  I tested 2015
-   but 2017 should work equally well.  Build the Release configuration.
 
 <a name="build-clang"/>
 
@@ -172,6 +126,56 @@ sure you are using 2015 or 2017.
 
 Note that, contrary to other steps, clang **does not** need to be in your `PATH`.
 
+
+<a name="unifdef"/>
+
+### Build unifdef.exe
+
+unifdef is an optional utility that can be used by CReduce to eliminate blocks of preprocessor
+logic.  If you have it, CReduce can use it.  If not, it will work anyway (but probably be
+slowe and the reduction might not be as good).   Note that if you only ever reduce
+pre-processed source (e.g. `cl.exe /EP foo.cpp`) then you don't need this.  Nevertheless,
+we don't want to stray from the path, because that's where things start going wrong.
+
+1. Clone the repo: `(src) $ git clone git://dotat.at/unifdef.git`
+2. Open a git bash shell (Git Bash is a tool that ships with [Git for Windows](https://gitforwindows.org/))
+   and cd to the directory where you cloned unifdef in step 1.
+3. Run this command: `(src/unifdef) $ sh scripts/reversion.sh`.  You should see some output like this:
+```
+   version
+     -> unifdef-2.11.25.65842ab.XX 2019-04-19 12:27:33 -0700
+```
+4. Open `src/unifdef/win32/unifdef.sln` in a recent version of Visual Studio.  I tested 2015
+   but 2017 should work equally well.  Build the Release configuration.
+   
+Note: unifdef does not need to be in `PATH`.  Later we will copy it into CReduces build tree
+which will allow creduce to find it.
+
+<a name="get-creduce"/>
+
+### Get CReduce
+
+1. Clone creduce from its [github repo](https://github.com/csmith-project/creduce).
+
+```(src) $ git clone https://github.com/csmith-project/creduce.git```
+
+2. Make sure you are set up to track the `llvm-svn-compatible` branch or else you
+may fail building CReduce using a newer version of Clang.
+
+```
+(src) $ cd creduce
+(src/creduce) $ git checkout -b creduce origin/llvm-svn-compatible
+Switched to a new branch 'creduce'
+Branch 'creduce' set up to track remote branch 'llvm-svn-compatible' from 'origin'.
+```
+
+3. Make a build directory (we'll use this later):
+
+```
+(src/creduce) $ cd ..
+(src) $ mkdir creduce-build
+```
+
 <a name="build"/>
 
 ## Build CReduce
@@ -202,11 +206,7 @@ anywhere.
 **Note:** You will get thousands of warnings, but you should not get any errors.
 Ignore the warnings.
 
-<a name="copy-unifdef"/>
-
-## Copy unifdef.exe
-
-unifdef needs to be manually copied into the place where creduce expects it to be.  
+4. unifdef needs to be manually copied into the place where creduce expects it to be.  
 
 ```
 (src/creduce-build) $ mkdir unifdef && cd unifdef
