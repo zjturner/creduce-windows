@@ -2,8 +2,8 @@ This is intended as a guide to get CReduce up and running on Windows.
 
 ##### Table of Contents  
 [Introduction](#intro)  
-[A Word on PATH and Shells](#path)
-[Preliminaries](#prelim)
+[A Word on PATH and Shells](#path)  
+[Preliminaries](#prelim)  
 [Get a Perl Distribution](#get-perl)  
 [Build Clang](#build-clang)
 [Build unifdef.exe](#unifdef)  
